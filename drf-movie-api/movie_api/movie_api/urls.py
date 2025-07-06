@@ -15,9 +15,31 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Movie API",
+      default_version='v1',
+      description="Movie API 문서입니다.",
+      contact=openapi.Contact(email="your_email@example.com"),
+      license=openapi.License(name="MIT License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("movies.urls")),
+    
+    # swagger 관련 URL 추가
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
 ]
