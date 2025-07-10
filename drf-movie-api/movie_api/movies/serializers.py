@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Movie, Actor
 
 
-class MovieSerializer(serializers.Serializer):
+class MovieSerializer_bk(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField()
     opening_date = serializers.DateField()
@@ -19,14 +19,25 @@ class MovieSerializer(serializers.Serializer):
     # 키에 맞는 데이터가 존재하지 않다면 설정한 기본값을 반환합니다.
     def update(self, instance, validated_data):
         instance.name = validated_data.get("name", instance.name)
-        instance.opening_date = validated_data.get("opening_date", instance.opening_date)
-        instance.running_time = validated_data.get("running_time", instance.running_time)
+        instance.opening_date = validated_data.get(
+            "opening_date", instance.opening_date
+        )
+        instance.running_time = validated_data.get(
+            "running_time", instance.running_time
+        )
         instance.overview = validated_data.get("overview", instance.overview)
         instance.save()
         return instance
 
 
-class ActorSerializer(serializers.Serializer):
+class MovieSerializer(serializers.ModelSerializer):
+    # 위 내용과 동일하지만, 모델시리얼라이저 사용하여 create 및 update 내장
+    class Meta:
+        model = Movie
+        fields = ["id", "name", "opening_date", "running_time", "overview"]
+
+
+class ActorSerializer_bk(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField()
     gender = serializers.CharField()
@@ -35,10 +46,19 @@ class ActorSerializer(serializers.Serializer):
     # 따라서 **validated_data로 언패킹하여 각 필드에 맞게 인자를 전달해야 정상적으로 모델 인스턴스가 생성됩니다.
     def create(self, validated_data):
         return Actor.objects.create(**validated_data)
-    
+
     def update(self, instance, validated_data):
         instance.name = validated_data.get("name", instance.name)
         instance.gender = validated_data.get("gender", instance.gender)
         instance.birth_date = validated_data.get("birth_date", instance.birth_date)
         instance.save()
         return instance
+
+
+class ActorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Actor
+        fields = ["name", "gender", "birth_date"]
+        # extra_kwargs = { extra_kwargs 학습 예제
+        #     'birth_date': {'write_only': True},
+        # }
