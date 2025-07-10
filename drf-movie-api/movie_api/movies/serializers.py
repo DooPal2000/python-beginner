@@ -1,5 +1,16 @@
 from rest_framework import serializers
 from .models import Movie, Actor
+from django.core.validators import MaxLengthValidator, MinLengthValidator
+from rest_framework.serializers import ValidationError
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
+
+
+def overview_validator(value):  # 별도로 함수를 만들어 사용
+    if value > 300:
+        raise ValidationError("소개 문구는 최대 300자 이하로 작성해야 합니다.")
+    elif value < 10:
+        raise ValidationError("소개 문구는 최소 10자 이상으로 작성해야 합니다.")
+    return value
 
 
 class MovieSerializer_bk(serializers.Serializer):
@@ -31,10 +42,32 @@ class MovieSerializer_bk(serializers.Serializer):
 
 
 class MovieSerializer(serializers.ModelSerializer):
-    # 위 내용과 동일하지만, 모델시리얼라이저 사용하여 create 및 update 내장
+    # 위 내용과 동일하지만, ModelSerializer 사용하여 create 및 update 내장
+    name = serializers.CharField(validators=[UniqueValidator(
+    queryset=Movie.objects.all(),
+    message='이미 존재하는 영화 이름입니다.',
+    )])
+
     class Meta:
         model = Movie
         fields = ["id", "name", "opening_date", "running_time", "overview"]
+
+        # 1. overview = serializers.CharField(
+        #     validators=[
+        #         MinLengthValidator(limit_value=10),
+        #         MaxLengthValidator(limit_value=300),
+        #     ]
+        # ) 이 방식 혹은 아래 방식
+        
+        # 2. overview = serializers.CharField(validators=[overview_validator])
+        
+        validators = [
+            UniqueTogetherValidator( # 3. 두 개 이상의 필드에서 값이 유일한지 확인해 주는 validator, 이름이 같아도 소개문구 다르면 생성 가능
+                queryset=Movie.objects.all(),
+                fields=['name', 'overview'],
+            )
+        ]
+
 
 
 class ActorSerializer_bk(serializers.Serializer):
