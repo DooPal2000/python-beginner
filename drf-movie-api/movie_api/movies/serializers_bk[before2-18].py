@@ -42,11 +42,8 @@ class MovieSerializer_bk(serializers.Serializer):
 
 
 class MovieSerializer(serializers.ModelSerializer):
-    # # [2-18] StringRelatedField 활용하여 관계된 모델 내용 출력
-    # reviews = serializers.StringRelatedField(many=True)
-    actors = serializers.StringRelatedField(many=True)
-
-    # reviews = ReviewSerializer(many=True, read_only=True)
+    # [2-18] StringRelatedField 활용하여 관계된 모델 내용 출력
+    reviews = serializers.StringRelatedField(many=True)
 
     # # [2-17]Serializer 출력용 필드로, 모델 변경 없이 관계 출력 가능 (migrations 불필요)
     # movie_reviews = serializers.PrimaryKeyRelatedField(source='reviews', many=True, read_only=True)
@@ -70,9 +67,7 @@ class MovieSerializer(serializers.ModelSerializer):
             "opening_date",
             "running_time",
             "overview",
-            "actors",
         ]
-        read_only_field = ["reviews"]
 
         # 1. overview = serializers.CharField(
         #     validators=[
@@ -89,20 +84,6 @@ class MovieSerializer(serializers.ModelSerializer):
                 fields=["name", "overview"],
             )
         ]
-
-
-class ReviewSerializer(serializers.ModelSerializer):
-    # ReviewSerializer 선언 전에 MovieSerializer가 선언되어야함.
-    movie = MovieSerializer(read_only=True)
-
-    # movie = serializers.StringRelatedField()
-
-    class Meta:
-        model = Review
-        fields = ["id", "movie", "username", "star", "comment", "created"]
-        # extra_kwargs = {
-        #     "movie": {"read_only": True},
-        # }
 
 
 class ActorSerializer_bk(serializers.Serializer):
@@ -124,11 +105,20 @@ class ActorSerializer_bk(serializers.Serializer):
 
 
 class ActorSerializer(serializers.ModelSerializer):
-    movies = MovieSerializer(many=True, read_only=True)
-
     class Meta:
         model = Actor
-        fields = ["name", "gender", "birth_date", "movies"]
+        fields = ["name", "gender", "birth_date"]
         # extra_kwargs = { extra_kwargs 학습 예제
         #     'birth_date': {'write_only': True},
         # }
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    movie = serializers.StringRelatedField()
+
+    class Meta:
+        model = Review
+        fields = ["id", "movie", "username", "star", "comment", "created"]
+        extra_kwargs = {
+            "movie": {"read_only": True},
+        }
