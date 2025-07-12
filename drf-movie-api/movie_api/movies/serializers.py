@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Movie, Actor
+from .models import Movie, Actor, Review
 from django.core.validators import MaxLengthValidator, MinLengthValidator
 from rest_framework.serializers import ValidationError
 from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
@@ -42,32 +42,43 @@ class MovieSerializer_bk(serializers.Serializer):
 
 
 class MovieSerializer(serializers.ModelSerializer):
+    
     # 위 내용과 동일하지만, ModelSerializer 사용하여 create 및 update 내장
-    name = serializers.CharField(validators=[UniqueValidator(
-    queryset=Movie.objects.all(),
-    message='이미 존재하는 영화 이름입니다.',
-    )])
+    name = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=Movie.objects.all(),
+                message="이미 존재하는 영화 이름입니다.",
+            )
+        ]
+    )
 
     class Meta:
         model = Movie
-        fields = ["id", "name", "opening_date", "running_time", "overview"]
-
+        fields = [
+            "id",
+            "name",
+            "reviews",
+            "opening_date",
+            "running_time",
+            "overview",
+        ]
+        read_only_field = ["reviews"]
         # 1. overview = serializers.CharField(
         #     validators=[
         #         MinLengthValidator(limit_value=10),
         #         MaxLengthValidator(limit_value=300),
         #     ]
         # ) 이 방식 혹은 아래 방식
-        
+
         # 2. overview = serializers.CharField(validators=[overview_validator])
-        
+
         validators = [
-            UniqueTogetherValidator( # 3. 두 개 이상의 필드에서 값이 유일한지 확인해 주는 validator, 이름이 같아도 소개문구 다르면 생성 가능
+            UniqueTogetherValidator(  # 3. 두 개 이상의 필드에서 값이 유일한지 확인해 주는 validator, 이름이 같아도 소개문구 다르면 생성 가능
                 queryset=Movie.objects.all(),
-                fields=['name', 'overview'],
+                fields=["name", "overview"],
             )
         ]
-
 
 
 class ActorSerializer_bk(serializers.Serializer):
@@ -95,3 +106,12 @@ class ActorSerializer(serializers.ModelSerializer):
         # extra_kwargs = { extra_kwargs 학습 예제
         #     'birth_date': {'write_only': True},
         # }
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ["id", "movie", "username", "star", "comment", "created"]
+        extra_kwargs = {
+            "movie": {"read_only": True},
+        }
